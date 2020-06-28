@@ -2,7 +2,7 @@
 
     <div id="search">
         <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
-        <input type="text" placeholder="Search contacts..." v-on:input="$emit('input', $event.target.value)" v-bind:value="value"/>
+        <input type="text" placeholder="Search contacts..." v-on:input="$emit('change', $event.target.value)" v-bind:value="value"/>
     </div>
 </template>
 
@@ -11,6 +11,10 @@
 
 export default {
     name: 'Search',
+    model : {
+        prop: 'value',
+        event: 'change'
+    },
     props:['value']
 }
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="contact">
+    <div class="contact" v-on:click="$emit('click')">
         <span class="contact-status"></span>
         <img v-bind:src="profile_img" v-bind:alt="default_profile_img" />
         <div class="meta">
@@ -100,5 +100,10 @@
         padding: 0 2px 0 0;
         margin: 0 0 0 1px;
         opacity: .5;
+    }
+
+    
+    .contact-status {
+        border: 2px solid #32465a !important;
     }
 </style>

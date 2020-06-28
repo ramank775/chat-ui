@@ -2,7 +2,7 @@
     <div class="messages">
         <ul>
             <li v-for="message in messages" :key="message.id">
-                <message v-bind:msg="message">
+                <message v-bind:message="message">
                 </message>
             </li>
         </ul>

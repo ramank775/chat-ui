@@ -1,5 +1,5 @@
 <template>
-    <div v-bind:class="{message.self?'sent': 'reply'}">
+    <div v-bind:class="[message.self?'sent': 'reply']">
         <img v-bind:src="message.user.profile_img" alt="" />
         <p>{{message.text}}</p>
     </div>

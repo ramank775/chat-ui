@@ -1,13 +1,14 @@
 <template>
     <div id="contacts">
         <ul>
-            <li class="contact" v-for="contact in contacts" :key="contact.username">
+            <li v-bind:class="['contact', contact.active? 'active': '']" v-for="contact in contacts" :key="contact.username">
                 <contact 
                     v-bind:status="contact.status" 
                     v-bind:profile_img="contact.profile_img" 
                     v-bind:default_profile_img="default_profile_img" 
                     v-bind:name="contact.username" 
-                    v-bind:preview="contact.preview">
+                    v-bind:preview="contact.preview"
+                    v-on:click="$emit('select', contact)">
                 </contact>
             </li>
         </ul>
@@ -84,7 +85,4 @@
         border-right: 5px solid #435f7a;
     }
 
-    #contacts ul li.contact.active span.contact-status {
-        border: 2px solid #32465a !important;
-    }
 </style>

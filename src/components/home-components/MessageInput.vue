@@ -1,9 +1,9 @@
 <template>
     <div class="message-input">
         <div class="wrap">
-            <input type="text" placeholder="Write your message..." />
-            <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
-            <button class="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+            <input type="text" v-model="msg.text" placeholder="Write your message..." v-on:keyup.enter="submit(msg)" />
+            <!-- <i class="fa fa-paperclip attachment" aria-hidden="true"></i> -->
+            <button class="submit" v-on:click="submit(msg)"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
         </div>
     </div>
 </template>
@@ -11,7 +11,20 @@
 
 <script>
     export default {
-        name: 'message-input'
+        name: 'message-input',
+        props: ['value'],
+        data: function() {
+            return {
+                msg: {...this.value}
+            }
+        },
+        methods: {
+            submit: function(msg) {
+                if(!msg.text) return;
+                this.$emit('submit', msg);
+                this.msg = {text: ''}
+            }
+        }
     }
 </script>
 

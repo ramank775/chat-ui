@@ -6,10 +6,11 @@
             v-bind:username="user.name" 
             v-bind:default_profile_img="default_profile_img" 
         />
-        <search></search>
+        <search v-on:change="onSearch" v-model="searchText"></search>
         <contacts
             v-bind:contacts="contacts"
-            v-bind:default_profile_img="default_profile_img"></contacts>
+            v-bind:default_profile_img="default_profile_img"
+            v-on:select="onContactSelect"></contacts>
         <div id="bottom-bar">
             <button id="addcontact">
                 <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> 
@@ -26,8 +27,8 @@
             v-bind:profile_img="user.profile_img"
             v-bind:name="user.name"
         />
-        <messages></messages>
-        <message-input></message-input>
+        <messages v-bind:messages="messages"></messages>
+        <message-input v-on:submit="newMessage"></message-input>
     </div>
   </div>
 </template>
@@ -44,7 +45,8 @@
         status: 'online',
         profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
         username: 'Louis Litt',
-        preview: 'You just got LITT up, Mike.'
+        preview: 'You just got LITT up, Mike.',
+        active: true
     },{
         status: 'online',
         profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
@@ -66,6 +68,27 @@
         username: 'Louis Litt 1',
         preview: 'You just got LITT up, Mike.'
     }]
+
+    const messages = [{
+        text: 'Hello',
+        user:  {
+            profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
+            username: 'Louis Litt',
+        },
+        self: true
+    }, {
+        text: 'Hello',
+        user:  {
+             profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
+             username: 'Louis',
+        },
+        self: false
+    }]
+
+    const self = {
+                name:"Raman",
+                profile_img: 'http://emilcarlsson.se/assets/mikeross.png'
+        }
     export default {
         name: 'Home',
         components: {
@@ -77,14 +100,30 @@
             'message-input': MessageInput
         },
         data : () => ({
-            user: {
-                name:"Raman",
-                profile_img: 'http://emilcarlsson.se/assets/mikeross.png',
-                
-            },
+            user: self,
             contacts: contacts,
-            default_profile_img: 'http://emilcarlsson.se/assets/mikeross.png'
-        })
+            default_profile_img: 'http://emilcarlsson.se/assets/mikeross.png',
+            messages: messages,
+            searchText: ''
+        }),
+        methods: {
+            newMessage: function(message) {
+                this.messages.push({...message, user: this.user, self: true});
+            },
+            onContactSelect: function(contact) {
+                const contacts = [...this.contacts]
+                const activeContact = contacts.find(x=> x.active);
+                if(activeContact) {
+                    activeContact.active = false;
+                }
+                const newActiveContact = contacts.find(x => x.username === contact.username);
+                newActiveContact.active = true;
+                this.contacts = contacts;
+            },
+            onSearch: function() {
+                console.log(this.searchText)
+            }
+        }
     }
 </script>
 
