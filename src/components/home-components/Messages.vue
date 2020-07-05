@@ -2,7 +2,7 @@
     <div class="messages">
         <ul>
             <li v-for="message in messages" :key="message.id">
-                <message v-bind:message="message">
+                <message v-bind:message="message" v-bind:default_profile_img="default_profile_img">
                 </message>
             </li>
         </ul>
@@ -14,7 +14,7 @@
     import Message from './Message.vue';
     export default {
         name: 'messages',
-        props: ['messages'],
+        props: ['messages', 'default_profile_img'],
         components: {
             message: Message
         }

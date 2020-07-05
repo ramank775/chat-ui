@@ -37,7 +37,7 @@ export class Socket {
                 this.onMessage && this.onMessage(data);
             };
             socket.onclose = (e) => {
-                if (this._isClosed && this._retry <= this._retryCounter) {
+                if (this._retry <= this._retryCounter || this._isClosed ) {
                     this.onDisconnect && this.onDisconnect(e);
                     return;
                 }

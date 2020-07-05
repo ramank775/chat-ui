@@ -1,7 +1,7 @@
 <template>
     <div class="contact" v-on:click="$emit('click')">
         <span class="contact-status"></span>
-        <img v-bind:src="profile_img" v-bind:alt="default_profile_img" />
+        <img v-bind:src="profile_img" alt="Profile" />
         <div class="meta">
             <p class="name">{{name}}</p>
             <p class="preview">{{preview}}</p>
@@ -12,7 +12,7 @@
 <script>
     export default {
         name: 'Contact',
-        props: ['status', 'profile_img', 'default_profile_img', 'name', 'preview']
+        props: ['status', 'profile_img', 'name', 'preview']
     }
 </script>
 

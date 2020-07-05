@@ -2,7 +2,7 @@
   <div id="frame">
     <div id="sidepanel">
         <profile 
-            v-bind:profile_img="user.profile_img" 
+            v-bind:profile_img="[user.profile_img||default_profile_img]" 
             v-bind:username="user.name" 
             v-bind:default_profile_img="default_profile_img" 
         />
@@ -23,12 +23,17 @@
         </div>
     </div>
     <div class="content">
-        <contact-profile
-            v-bind:profile_img="user.profile_img"
-            v-bind:name="user.name"
-        />
-        <messages v-bind:messages="messages"></messages>
-        <message-input v-on:submit="newMessage"></message-input>
+        <div v-if="selectedChat">
+            <contact-profile
+                v-bind:profile_img="[selectedChat.profile_img||default_profile_img]"
+                v-bind:name="selectedChat.name"
+            />
+            <messages v-bind:messages="messages" v-bind:default_profile_img="default_profile_img"></messages>
+            <message-input v-on:submit="newMessage"></message-input>
+        </div>
+        <div v-else>
+            <h2>Welcome</h2>
+        </div>
     </div>
   </div>
 </template>
@@ -40,55 +45,8 @@
     import ContactProfile from './home-components/ContactProfile.vue';
     import Messages from './home-components/Messages.vue';
     import MessageInput from './home-components/MessageInput.vue';
-    
-    const contacts = [{
-        status: 'online',
-        profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
-        username: 'Louis Litt',
-        preview: 'You just got LITT up, Mike.',
-        active: true
-    },{
-        status: 'online',
-        profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
-        username: 'Louis',
-        preview: 'You just got LITT up, Mike.'
-    },{
-        status: 'online',
-        profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
-        username: 'Litt',
-        preview: 'You just got LITT up, Mike.'
-    },{
-        status: 'online',
-        profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
-        username: 'Litt Louis',
-        preview: 'You just got LITT up, Mike.'
-    },{
-        status: 'online',
-        profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
-        username: 'Louis Litt 1',
-        preview: 'You just got LITT up, Mike.'
-    }]
-
-    const messages = [{
-        text: 'Hello',
-        user:  {
-            profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
-            username: 'Louis Litt',
-        },
-        self: true
-    }, {
-        text: 'Hello',
-        user:  {
-             profile_img: 'http://emilcarlsson.se/assets/louislitt.png',
-             username: 'Louis',
-        },
-        self: false
-    }]
-
-    const self = {
-                name:"Raman",
-                profile_img: 'http://emilcarlsson.se/assets/mikeross.png'
-        }
+    import defaultProfileImg from '@/assets/default-user.png';
+   
     export default {
         name: 'Home',
         components: {
@@ -99,16 +57,19 @@
             'messages': Messages,
             'message-input': MessageInput
         },
+        props: ['store'],
         data : () => ({
-            user: self,
-            contacts: contacts,
-            default_profile_img: 'http://emilcarlsson.se/assets/mikeross.png',
-            messages: messages,
-            searchText: ''
+            user: {},
+            contacts: [],
+            default_profile_img: defaultProfileImg,
+            messages: [],
+            searchText: '',
+            selectedChat: null
         }),
         methods: {
             newMessage: function(message) {
                 this.messages.push({...message, user: this.user, self: true});
+                this.store.sendMessage({...message, to: this.selectedChat});
             },
             onContactSelect: function(contact) {
                 const contacts = [...this.contacts]
@@ -119,10 +80,53 @@
                 const newActiveContact = contacts.find(x => x.username === contact.username);
                 newActiveContact.active = true;
                 this.contacts = contacts;
+                if(this.selectedChat?.username !== contact.username) {
+                    this.selectedChat = contact;
+                    this.loadChat();
+                }
             },
-            onSearch: function() {
-                console.log(this.searchText)
+            onSearch: async function() {
+                const localSearchPromise = this.store.getContacts(this.searchText);
+                let serverSearchPromise = null;
+                if(this.searchText.length > 4) {
+                    serverSearchPromise = this.store.searchUsers(this.searchText)
+                }
+                const localContacts = await localSearchPromise;
+                this.contacts = localContacts;
+                const serverContacts = (await serverSearchPromise)||[];
+                const localUsernames = localContacts.map(x=>x.username);
+                const uniqueServerContacts = serverContacts
+                        .filter(x=> localUsernames.indexOf(x.username) == -1)
+                        .map(x=> ({...x, status: 2}));
+                this.contacts = [...localContacts, ...uniqueServerContacts];
+            },
+            loadChat: async function() {
+                if(!this.selectedChat) return;
+                const messages = await this.store.getMessages(this.selectedChat.username);
+                const contacts = await this.store.getContacts();
+                contacts.push(this.user);
+                this.messages = messages.map(msg => {
+                    msg.user = contacts.find(contact=> contact.username == msg.from);
+                    msg.self = msg.user.username === this.user.username;
+                    return msg;
+                });
+                console.log(messages);
             }
+        },
+        created: async function() {
+            await this.store.connect();
+            this.store.newMessageEvent.subscribe(async (msg) => {
+                if(msg.from === this.selectedChat?.username) {
+                    this.messages.push(msg);
+                    return;
+                }
+                this.contacts = await this.store.getContacts();
+
+            })
+            console.log('store connected')
+            const userPromise = this.store.getUser();
+            const contactsPromise = this.store.getContacts();
+            [this.user, this.contacts] = await Promise.all([userPromise, contactsPromise]);
         }
     }
 </script>

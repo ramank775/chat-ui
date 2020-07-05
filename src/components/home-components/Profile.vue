@@ -35,7 +35,7 @@
 <script>
 export default {
     name: 'Profile',
-    props: ['profile_img', 'default_profile_img', 'username']
+    props: ['profile_img', 'username']
 }
 </script>
 

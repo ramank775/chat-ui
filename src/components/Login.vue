@@ -56,14 +56,15 @@
             }
         }),
         methods: {
-            handleLogin: (login) => {
-                console.log(login)
+            handleLogin: function(login){
+                this.$emit('login', login);
             },
-            handleSignup: (signup) => {
+            handleSignup: function(signup) {
                 if(signup.psw !== signup.psw_repeat) {
                     alert('Password doesn\'t match');
+                    return;
                 }
-
+                this.$emit('signup', signup)
             }
         }
     }

@@ -1,6 +1,6 @@
 <template>
     <div v-bind:class="[message.self?'sent': 'reply']">
-        <img v-bind:src="message.user.profile_img" alt="" />
+        <img v-bind:src="[message.user.profile_img || default_profile_img]" alt="" />
         <p>{{message.text}}</p>
     </div>
 </template>
@@ -9,27 +9,27 @@
 <script>
     export default {
         name: 'message',
-        props:['message']
+        props:['message', 'default_profile_img']
     }
 </script>
 
 <style scoped>
 
-    .sent img {
+    .reply img {
         margin: 6px 8px 0 0;
     }
 
-    .sent p {
+    .reply p {
         background: #435f7a;
         color: #f5f5f5;
     }
 
-    .reply img {
+    .sent img {
         float: right;
         margin: 6px 0 0 8px;
     }
 
-    .reply p {
+    .sent p {
         background: #f5f5f5;
         float: right;
     }
