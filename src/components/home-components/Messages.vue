@@ -2,7 +2,9 @@
     <div class="messages" ref='messages'>
         <ul>
             <li v-for="message in messages" :key="message.id">
-                <message v-bind:message="message" v-bind:default_profile_img="default_profile_img">
+                <message v-bind:message="message" 
+                    v-bind:user="getUser(message)"
+                    v-bind:default_profile_img="default_profile_img">
                 </message>
             </li>
         </ul>
@@ -14,9 +16,14 @@
     import Message from './Message.vue';
     export default {
         name: 'messages',
-        props: ['messages', 'default_profile_img'],
+        props: ['messages', 'default_profile_img', 'users'],
         components: {
             message: Message
+        },
+        methods: {
+            getUser: function(message) {
+                return this.users.get(message.from);
+            }
         },
         mounted: function() {
             const messageDisplay = this.$refs.messages;

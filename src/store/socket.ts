@@ -34,7 +34,11 @@ export class Socket {
             };
             socket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
-                this.onMessage && this.onMessage(data);
+                let parsedData = data;
+                if(Array.isArray(data)) {
+                    parsedData = data.map(x=> JSON.parse(x));
+                }
+                this.onMessage && this.onMessage(parsedData);
             };
             socket.onclose = (e) => {
                 if (this._retry <= this._retryCounter || this._isClosed ) {

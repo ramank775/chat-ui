@@ -7,10 +7,11 @@
             v-bind:default_profile_img="default_profile_img" 
         />
         <search v-on:change="onSearch" v-model="searchText"></search>
-        <contacts
-            v-bind:contacts="contacts"
+        <chats
+            v-bind:chats="chats"
             v-bind:default_profile_img="default_profile_img"
-            v-on:select="onContactSelect"></contacts>
+            v-on:select="onChatSelect" 
+        />
         <div id="bottom-bar">
             <button id="addcontact">
                 <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> 
@@ -24,12 +25,11 @@
     </div>
     <div class="content">
         <div v-if="selectedChat">
-            <contact-profile
-                v-bind:profile_img="[selectedChat.profile_img||default_profile_img]"
-                v-bind:name="selectedChat.name"
+            <chat-room 
+                v-bind:chat="selectedChat"
+                v-bind:default_profile_img="default_profile_img"
+                v-on:sendMessage="sendMessage"
             />
-            <messages v-bind:messages="messages" v-bind:default_profile_img="default_profile_img"></messages>
-            <message-input v-on:submit="newMessage"></message-input>
         </div>
         <div v-else>
             <h2>Welcome</h2>
@@ -39,50 +39,48 @@
 </template>
 
 <script>
-    import Contacts from './home-components/Contacts.vue';
+    import Chats from './home-components/Chats.vue';
     import Profile from './home-components/Profile.vue';
     import Search from './home-components/Search.vue';
-    import ContactProfile from './home-components/ContactProfile.vue';
-    import Messages from './home-components/Messages.vue';
-    import MessageInput from './home-components/MessageInput.vue';
+    import ChatRoom from './home-components/ChatRoom.vue';
     import defaultProfileImg from '@/assets/default-user.png';
+    import { ChatViewModel, ChatType } from '../model';
    
     export default {
         name: 'Home',
         components: {
             'profile': Profile,
-            'contacts': Contacts,
+            'chats': Chats,
             'search': Search,
-            'contact-profile': ContactProfile,
-            'messages': Messages,
-            'message-input': MessageInput
+            'chat-room': ChatRoom
         },
         props: ['store'],
         data : () => ({
             user: {},
-            contacts: [],
+            chats: [],
+            chatMapping : new Map(),
             default_profile_img: defaultProfileImg,
-            messages: [],
             searchText: '',
-            selectedChat: null
+            selectedChat: null,
+            filteredChatMapping: new Map()
         }),
         methods: {
-            newMessage: function(message) {
-                this.messages.push({...message, user: this.user, self: true});
-                this.store.sendMessage({...message, to: this.selectedChat});
+            sendMessage: function(message) {
+                this.selectedChat.messages.push({...message, from: this.user.username,  self: true});
+                this.store.sendMessage({...message, to: this.selectedChat.id});
             },
-            onContactSelect: function(contact) {
-                const contacts = [...this.contacts]
-                const activeContact = contacts.find(x=> x.active);
-                if(activeContact) {
-                    activeContact.active = false;
+            onChatSelect: function(chat) {
+                const chats = [...this.chats]
+                const activeChat = chats.find(x=> x.active);
+                if(activeChat) {
+                    activeChat.active = false;
                 }
-                const newActiveContact = contacts.find(x => x.username === contact.username);
-                newActiveContact.active = true;
-                this.contacts = contacts;
-                if(this.selectedChat?.username !== contact.username) {
-                    this.selectedChat = contact;
-                    this.loadChat();
+                const newActiveChat = chats.find(x => x.id === chat.id);
+                newActiveChat.active = true;
+                this.chats = chats;
+                if(this.selectedChat?.id !== chat.id) {
+                    this.selectedChat = chat;
+                    //this.loadChat();
                 }
             },
             onSearch: async function() {
@@ -92,41 +90,62 @@
                     serverSearchPromise = this.store.searchUsers(this.searchText)
                 }
                 const localContacts = await localSearchPromise;
-                this.contacts = localContacts;
                 const serverContacts = (await serverSearchPromise)||[];
                 const localUsernames = localContacts.map(x=>x.username);
                 const uniqueServerContacts = serverContacts
-                        .filter(x=> localUsernames.indexOf(x.username) == -1)
-                        .map(x=> ({...x, status: 2}));
-                this.contacts = [...localContacts, ...uniqueServerContacts];
+                        .filter(x=> localUsernames.indexOf(x.username) == -1);
+                let contacts = [...localContacts, ...uniqueServerContacts];
+                const chatMapping = new Map()
+                contacts.forEach(contact => {
+                    let chat = this.chatMapping.get(contact.username)
+                    if(!chat) {
+                        chat = new ChatViewModel({
+                            type: ChatType.PERSONAL,
+                            id: contact.username,
+                            users: [this.user.username, contact.username],
+                            name: contact.name
+                        });
+                        chat.messages =[];
+                        chat.usersProfile.set(contact.username, contact);
+                        chat.usersProfile.set(this.user.username, this.user);
+                    }
+                    chatMapping.set(chat.id, chat);
+                });
+                this.filteredChatMapping = chatMapping;
+                this.updateChatList();
             },
             loadChat: async function() {
                 if(!this.selectedChat) return;
-                const messages = await this.store.getMessages(this.selectedChat.username);
+                const messages = await this.store.getMessages(this.selectedChat.chatId);
                 const contacts = await this.store.getContacts();
                 contacts.push(this.user);
-                this.messages = messages.map(msg => {
-                    msg.user = contacts.find(contact=> contact.username == msg.from);
-                    msg.self = msg.user.username === this.user.username;
-                    return msg;
-                });
+                this.messages = messages;
                 console.log(messages);
+            },
+            updateChatList: function() {
+                this.chats = Array.from(this.filteredChatMapping.values()).sort((x,y) => {
+                    return x[0]?.ts - y[0]?.ts;
+                });
             }
         },
         created: async function() {
             await this.store.connect();
             this.store.newMessageEvent.subscribe(async (msg) => {
-                if(msg.from === this.selectedChat?.username) {
-                    this.messages.push(msg);
-                    return;
+                let chat = this.chatMapping.get(msg.chatId)
+                if(this.chatMapping.has(msg.chatId)) {
+                    chat.messages.push(msg);
+                } else {
+                    this.chats = await this.store.getChats();
                 }
-                this.contacts = await this.store.getContacts();
-
-            })
+                this.updateChatList();
+                
+            });
             console.log('store connected')
-            const userPromise = this.store.getUser();
-            const contactsPromise = this.store.getContacts();
-            [this.user, this.contacts] = await Promise.all([userPromise, contactsPromise]);
+            this.user = await this.store.getUser();
+            this.chatMapping = await this.store.getChats();
+            this.filteredChatMapping = this.chatMapping;
+            this.updateChatList();
+
         }
     }
 </script>

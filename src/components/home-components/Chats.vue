@@ -1,68 +1,68 @@
 <template>
-    <div id="contacts">
+    <div id="chats">
         <ul>
-            <li v-bind:class="['contact', contact.active? 'active': '']" v-for="contact in contacts" :key="contact.username">
-                <contact 
-                    v-bind:status="contact.status" 
-                    v-bind:profile_img="[contact.profile_img|| default_profile_img]" 
-                    v-bind:name="contact.name" 
-                    v-bind:preview="contact.preview"
-                    v-on:click="$emit('select', contact)">
-                </contact>
+            <li v-for="chat in chats" :key="chat.chatId">
+                <chat 
+                    v-bind:status="chat.status" 
+                    v-bind:profile_img="[chat.profile_img|| default_profile_img]" 
+                    v-bind:name="chat.name" 
+                    v-bind:preview="chat.preview"
+                    v-on:click="$emit('select', chat)">
+                </chat>
             </li>
         </ul>
     </div>
 </template>
 
 <script>
-    import Contact from './Contact.vue'
+    import Chat from './Chat.vue'
     export default {
-        name: 'Contacts',
-        props:['contacts', 'default_profile_img'],
+        name: 'chats',
+        props:['chats', 'default_profile_img'],
         components: {
-            contact: Contact
+            chat: Chat
         },
         methods: {
             created: () => {
-                console.log(this.contacts)
+                console.log(this.chats)
             }
         }
     }
 </script>
 
 <style scoped>
-    #contacts {
+    #chats {
         height: calc(100% - 177px);
         overflow-y: scroll;
         overflow-x: hidden;
     }
 
     @media screen and (max-width: 735px) {
-        #contacts {
+        #chats {
             height: calc(100% - 149px);
             overflow-y: scroll;
             overflow-x: hidden;
         }
 
-        #contacts::-webkit-scrollbar {
+        #chats::-webkit-scrollbar {
             display: none;
         }
     }
 
-    #contacts.expanded {
+    #chats.expanded {
         height: calc(100% - 334px);
     }
 
-    #contacts::-webkit-scrollbar {
+    #chats::-webkit-scrollbar {
         width: 8px;
         background: #2c3e50;
     }
 
-    #contacts::-webkit-scrollbar-thumb {
+    #chats::-webkit-scrollbar-thumb {
         background-color: #243140;
     }
 
-    #contacts ul li.contact {
+    #chats ul li.contact {
         position: relative;
         padding: 10px 0 15px 0;
         font-size: 0.9em;
@@ -70,16 +70,16 @@
     }
 
     @media screen and (max-width: 735px) {
-        #contacts ul li.contact {
+        #chats ul li.contact {
             padding: 6px 0 46px 8px;
         }
     }
 
-    #contacts ul li.contact:hover {
+    #chats ul li.contact:hover {
         background: #32465a;
     }
 
-    #contacts ul li.contact.active {
+    #chats ul li.contact.active {
         background: #32465a;
         border-right: 5px solid #435f7a;
     }

@@ -1,6 +1,6 @@
 <template>
-    <div class="contact" v-on:click="$emit('click')">
-        <span class="contact-status"></span>
+    <div class="chat" v-on:click="$emit('click')">
+        <span class="chat-status"></span>
         <img v-bind:src="profile_img" alt="Profile" />
         <div class="meta">
             <p class="name">{{name}}</p>
@@ -11,25 +11,25 @@
 
 <script>
     export default {
-        name: 'Contact',
+        name: 'chat',
         props: ['status', 'profile_img', 'name', 'preview']
     }
 </script>
 
 <style scoped>
-    .contact {
+    .chat {
         width: 88%;
         margin: 0 auto;
         position: relative;
     }
 
     @media screen and (max-width: 735px) {
-        .contact {
+        .chat {
             width: 100%;
         }
     }
 
-    .contact span {
+    .chat span {
         position: absolute;
         left: 0;
         margin: -2px 0 0 -2px;
@@ -40,19 +40,19 @@
         background: #95a5a6;
     }
 
-    .contact span.online {
+    .chat span.online {
         background: #2ecc71;
     }
 
-    .contact span.away {
+    .chat span.away {
         background: #f1c40f;
     }
 
-    .contact span.busy {
+    .chat span.busy {
         background: #e74c3c;
     }
 
-    .contact img {
+    .chat img {
         width: 40px;
         border-radius: 50%;
         float: left;
@@ -60,26 +60,26 @@
     }
 
     @media screen and (max-width: 735px) {
-        .contact img {
+        .chat img {
             margin-right: 0px;
         }
     }
 
-    .contact .meta {
+    .chat .meta {
         padding: 5px 0 0 0;
     }
 
     @media screen and (max-width: 735px) {
-        .contact .meta {
+        .chat .meta {
             display: none;
         }
     }
 
-    .contact .meta .name {
+    .chat .meta .name {
         font-weight: 600;
     }
 
-    .contact .meta .preview {
+    .chat .meta .preview {
         margin: 5px 0 0 0;
         padding: 0 0 1px;
         font-weight: 400;
@@ -92,7 +92,7 @@
         transition: 1s all ease;
     }
 
-    .contact .meta .preview span {
+    .chat .meta .preview span {
         position: initial;
         border-radius: initial;
         background: none;
@@ -103,7 +103,7 @@
     }
 
     
-    .contact-status {
+    .chat-status {
         border: 2px solid #32465a !important;
     }
 </style>

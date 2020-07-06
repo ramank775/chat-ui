@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-
+import { Chat, User, Message } from "../model";
 const DBInfo: { name: string, version: number } = {
     name: 'Chat',
     version: 1
@@ -8,31 +8,16 @@ const DBInfo: { name: string, version: number } = {
 interface ChatDBSchema_v1 extends DBSchema {
     contacts: {
         key: string,
-        value: {
-            username: string,
-            name: string,
-            profile_img: string,
-            status: number
-        }
+        value: User
     },
     chat: {
         key: string,
-        value: {
-            type: string,
-            id: string,
-            users: string[]
-        }
+        value: Chat
     },
     messages: {
         key: string,
-        value: {
-            msgId: string,
-            from: string,
-            to: string,
-            text: string,
-            status: number
-        },
-        indexes: { 'by-chatId': string, 'by-status': number }
+        value: Message,
+        indexes: { 'by-chatId': string, 'by-status': number, 'by-ts': number }
     }
 }
 
@@ -51,6 +36,7 @@ export class ChatDB {
                 const messages = db.createObjectStore('messages', { keyPath: 'msgId' });
                 messages.createIndex('by-chatId', 'to');
                 messages.createIndex('by-status', 'status');
+                messages.createIndex('by-ts', 'ts');
             }
         });
     }

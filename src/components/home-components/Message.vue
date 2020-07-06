@@ -1,6 +1,6 @@
 <template>
     <div v-bind:class="[message.self?'sent': 'reply']">
-        <img v-bind:src="[message.user.profile_img || default_profile_img]" alt="" />
+        <img v-bind:src="[user.profile_img || default_profile_img]" alt="" />
         <p>{{message.text}}</p>
     </div>
 </template>
@@ -9,7 +9,7 @@
 <script>
     export default {
         name: 'message',
-        props:['message', 'default_profile_img']
+        props:['message', 'default_profile_img', 'user']
     }
 </script>
 
