@@ -3,7 +3,7 @@ module.exports = {
         disableHostCheck: true,
         proxy: {
             '^/': {
-                target: 'https://8080-c17aed85-89bd-44ab-8dfd-070350e67420.ws-us02.gitpod.io',
+                target: 'https://8080-cfdb0312-c8b9-4be6-8225-bb16d365c9d9.ws-us02.gitpod.io',
                 wss: true,
                 changeOrigin: true
             }

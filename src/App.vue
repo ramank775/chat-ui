@@ -1,6 +1,9 @@
 <template>
     <home v-if="isLogin" v-bind:store="store"/>
-    <login v-else v-on:login="login" v-on:signup="signup"/>
+    <login v-else v-on:login="login" 
+        v-on:signup="signup" 
+        v-bind:isUsernameAvailable="isUsernameAvailable"
+        v-on:validateUsername="validateUsername"/>
 </template>
 
 <script>
@@ -14,7 +17,8 @@ export default {
   name: 'App',
   data: () => ({
       isLogin: store.isLogin(),
-      store
+      store,
+      isUsernameAvailable: false
   }),
   components: {
     Home,
@@ -23,10 +27,21 @@ export default {
   methods: {
       login: async function (login) {
           await this.store.login(login);
-          this.isLogin = store.isLogin();
+          this.isLogin = this.store.isLogin();
       },
-      signup: async(signup) => {
-          console.log(signup);
+      signup: async function(signup) {
+          console.log('isUsernameAvailable', this.isUsernameAvailable);
+          if(!this.isUsernameAvailable) return;
+          await this.store.signup(signup);
+          this.isLogin = this.store.isLogin();
+      },
+      validateUsername: async function(username) {
+          if(username.length< 4) {
+              this.isUsernameAvailable = false;
+              return;
+          }
+          this.isUsernameAvailable = await this.store.validateUsername(username)
+          console.log(this.isUsernameAvailable);
       }
   }
 }

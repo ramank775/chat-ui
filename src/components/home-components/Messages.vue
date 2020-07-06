@@ -1,5 +1,5 @@
 <template>
-    <div class="messages">
+    <div class="messages" ref='messages'>
         <ul>
             <li v-for="message in messages" :key="message.id">
                 <message v-bind:message="message" v-bind:default_profile_img="default_profile_img">
@@ -17,6 +17,14 @@
         props: ['messages', 'default_profile_img'],
         components: {
             message: Message
+        },
+        mounted: function() {
+            const messageDisplay = this.$refs.messages;
+            messageDisplay.scrollTop = messageDisplay.scrollHeight
+        },
+        updated: function() {
+            const messageDisplay = this.$refs.messages;
+            messageDisplay.scrollTop = messageDisplay.scrollHeight
         }
     }
 </script>
@@ -25,15 +33,15 @@
     
     .messages {
         height: auto;
-        min-height: calc(100% - 93px);
-        max-height: calc(100% - 93px);
+        min-height: calc(100vh - 93px);
+        max-height: calc(100vh - 93px);
         overflow-y: scroll;
         overflow-x: hidden;
     }
 
     @media screen and (max-width: 735px) {
         .messages {
-            max-height: calc(100% - 105px);
+            max-height: calc(100vh - 105px);
         }
     }
 

@@ -21,6 +21,7 @@ export class Store {
         this._socket.onMessage = (msgs: any) => {
             msgs = Array.isArray(msgs) ? msgs : [msgs];
             msgs.forEach(async (msg: any) => {
+                msg.to = msg.from;
                 await this.addMessage(msg);
                 this.newMessageEvent.emit(msg);
             });
@@ -79,7 +80,7 @@ export class Store {
 
 
 
-    private async addMessage(msg: { msgId: string, from: string, text: string, to: string, status: MessageStatus, user: any, self:Boolean }) {
+    private async addMessage(msg: { msgId: string, from: string, text: string, to: string, status: MessageStatus, user: any, self: Boolean }) {
         msg.status = MessageStatus.UNREAD;
         if (!this.user) return;
         const transcation = this.chatDbConnector.db?.transaction('messages', 'readwrite');
@@ -88,7 +89,8 @@ export class Store {
         let sender = await this.getUserByUsername(msg.from);
         msg.user = sender;
         msg.self = false;
-        if(!sender) return;
+        if (!sender) return;
+        sender.status = 0;
         const chat = await transcation.db.get('chat', sender.username)
         if (!chat) {
             await transcation.db.add('chat', { type: '1-1', id: sender.username, users: [this.user.username, sender.username] })
@@ -212,10 +214,10 @@ export class Store {
         return resp;
     }
 
-    async signup(value: { username: string, name: string, secretPhase: string }) {
+    async signup(value: { username: string, name: string, psw: string }) {
         const resp = await fetch('/register', {
             method: 'post',
-            body: JSON.stringify(value),
+            body: JSON.stringify({ username: value.username, name: value.name, secretPhase: value.psw }),
             headers: new Headers({
                 'Content-Type': 'application/json'
             })

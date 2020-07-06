@@ -31,7 +31,7 @@
                     <p>By creating an account you agree to our <a href="#" style="color:dodgerblue">Terms & Privacy</a>.</p>
 
                     <div class="clearfix">
-                        <button type="submit" class="red">Sign Up</button>
+                        <button type="submit" class="red" :disabled="!isUsernameAvailable">Sign Up</button>
                     </div>
                 </div>
             </form>
@@ -42,6 +42,7 @@
 <script>
     export default {
         name: 'login',
+        props:['isUsernameAvailable'],
         data: () => ({
             tab: 'login',
             login: {
@@ -65,6 +66,9 @@
                     return;
                 }
                 this.$emit('signup', signup)
+            },
+            validateUsername: function(username) {
+                this.$emit('validateUsername', username);
             }
         }
     }
@@ -107,6 +111,11 @@ button {
 .red {
    background-color: #f44336 !important;
 }
+
+button[disabled] {
+    background-color: grey !important;
+}
+
 /* Add a hover effect for buttons */
 button:hover {
   opacity: 0.8;
