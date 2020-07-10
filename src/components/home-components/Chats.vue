@@ -62,7 +62,7 @@
         background-color: #243140;
     }
 
-    #chats ul li.contact {
+    #chats ul li.chat {
         position: relative;
         padding: 10px 0 15px 0;
         font-size: 0.9em;
@@ -70,16 +70,16 @@
     }
 
     @media screen and (max-width: 735px) {
-        #chats ul li.contact {
+        #chats ul li.chat {
             padding: 6px 0 46px 8px;
         }
     }
 
-    #chats ul li.contact:hover {
+    #chats ul li.chat:hover {
         background: #32465a;
     }
 
-    #chats ul li.contact.active {
+    #chats ul li.chat.active {
         background: #32465a;
         border-right: 5px solid #435f7a;
     }

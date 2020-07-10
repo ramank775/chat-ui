@@ -205,29 +205,37 @@ export class Store {
         const chatDict: Map<string, ChatViewModel> = new Map<string, ChatViewModel>()
         //const chatOrder = [];
         if (chats.length) {
-            let cursor = await db.transaction('messages', 'readonly').store.index('by-ts').openCursor(undefined, 'prev');
+            let cursor = await db.transaction('messages', 'readonly')
+                .store.index('by-ts')
+                .openCursor(undefined, 'next');
+            const users: Set<string> = new Set<string>();
             while (cursor) {
                 const chatId = cursor.value.chatId;
                 let chatVM = chatDict.get(chatId);
                 if (!chatVM) {
                     let chat = chats.find(x => x.id == chatId);
                     if (!chat) continue;
-                    //chatOrder.push(chatId);
                     chatVM = new ChatViewModel(chat);
-                    const userPromise:Promise<User>[] = [];
-                    chatVM.usersProfile.set(user.username, new User(user));
-                    chat.users.filter(x => x != user.username).forEach((x: string) => {
-                        userPromise.push(this.getUserByUsername(x));
-                    });
-                    const users = await Promise.all(userPromise);
-                    users.forEach(x=> {
-                        chatVM?.usersProfile.set(x.username, x);
-                    });
                     chatDict.set(chatId, chatVM);
+                    chatVM.users.forEach((val:string) => users.add(val));
                 }
                 chatVM.messages.push(cursor.value);
                 cursor = await cursor.continue();
             }
+            const usersProfile: Map<string, User> = new Map<string, User>();
+            for (const u of users) {
+                const userProfile = await this.getUserByUsername(u)
+                usersProfile.set(u, userProfile);
+            }
+            
+            chatDict.forEach(async(value: ChatViewModel) => {
+                value.users.forEach(x => {
+                    const user= usersProfile.get(x);
+                    if(!user) return;
+                    value.usersProfile.set(x, user);
+                });
+            })
+            
         }
 
         return chatDict;

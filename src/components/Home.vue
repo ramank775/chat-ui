@@ -135,7 +135,8 @@
                 if(this.chatMapping.has(msg.chatId)) {
                     chat.messages.push(msg);
                 } else {
-                    this.chats = await this.store.getChats();
+                    this.chatMapping = await this.store.getChats();
+                    this.filteredChatMapping = this.chatMapping;
                 }
                 this.updateChatList();
                 

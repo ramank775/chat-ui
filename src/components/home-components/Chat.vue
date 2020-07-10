@@ -106,4 +106,26 @@
     .chat-status {
         border: 2px solid #32465a !important;
     }
+
+    .chat {
+        position: relative;
+        padding: 10px 0 15px 0;
+        font-size: 0.9em;
+        cursor: pointer;
+    }
+
+    @media screen and (max-width: 735px) {
+        .chat {
+            padding: 6px 0 46px 8px;
+        }
+    }
+
+    .chat:hover {
+        background: #32465a;
+    }
+
+    .chat.active {
+        background: #32465a;
+        border-right: 5px solid #435f7a;
+    }
 </style>
