@@ -207,7 +207,7 @@ export class Store {
         if (chats.length) {
             let cursor = await db.transaction('messages', 'readonly')
                 .store.index('by-ts')
-                .openCursor(undefined, 'next');
+                .openCursor(undefined, 'prev');
             const users: Set<string> = new Set<string>();
             while (cursor) {
                 const chatId = cursor.value.chatId;
@@ -229,6 +229,7 @@ export class Store {
             }
             
             chatDict.forEach(async(value: ChatViewModel) => {
+                value.messages = value.messages.reverse();
                 value.users.forEach(x => {
                     const user= usersProfile.get(x);
                     if(!user) return;

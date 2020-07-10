@@ -66,8 +66,10 @@
         }),
         methods: {
             sendMessage: function(message) {
-                this.selectedChat.messages.push({...message, from: this.user.username,  self: true});
+                this.selectedChat.messages.push({...message, from: this.user.username, self: true,ts: Date.now()});
                 this.store.sendMessage({...message, to: this.selectedChat.id});
+                if(this.chats.indexOf(this.selectedChat) != 0)
+                    this.updateChatList();
             },
             onChatSelect: function(chat) {
                 const chats = [...this.chats]
@@ -124,7 +126,7 @@
             },
             updateChatList: function() {
                 this.chats = Array.from(this.filteredChatMapping.values()).sort((x,y) => {
-                    return x[0]?.ts - y[0]?.ts;
+                    return -(x.messages[x.messages.length -1]?.ts - y.messages[y.messages.length -1]?.ts);
                 });
             }
         },
