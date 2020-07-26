@@ -25,4 +25,8 @@ export class ChatViewModel extends Chat {
     constructor(chat:Chat) {
         super(chat);
     }
+    
+    get preview(): String {
+        return this.messages[this.messages.length -1]?.text
+    }
 }

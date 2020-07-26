@@ -1,6 +1,6 @@
 <template>
     <div class="chat" v-on:click="$emit('click')">
-        <span class="chat-status"></span>
+        <!-- <span class="chat-status"></span> -->
         <img v-bind:src="profile_img" alt="Profile" />
         <div class="meta">
             <p class="name">{{name}}</p>

@@ -7,15 +7,25 @@
             v-bind:default_profile_img="default_profile_img" 
         />
         <search v-on:change="onSearch" v-model="searchText"></search>
-        <chats
-            v-bind:chats="chats"
-            v-bind:default_profile_img="default_profile_img"
-            v-on:select="onChatSelect" 
-        />
+        <div id="chatspanel">
+            <chats
+                v-bind:chats="chats"
+                v-bind:default_profile_img="default_profile_img"
+                v-on:select="onChatSelect" 
+            />
+        </div>
+        <div v-if="showGroup">
+            <create-group 
+                v-bind:getContact="(x) => store.searchUsers(x)" 
+                v-bind:default_profile_img="default_profile_img"
+                v-on:search="onGroupMemberSearach"
+                v-on:create="onGroupCreate"
+                v-on:cancel="showGroup=false" />
+        </div>
         <div id="bottom-bar">
-            <button id="addcontact">
-                <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> 
-                <span>Add contact</span>
+            <button id="addcontact" v-on:click="showGroup = true">
+                <i class="fa fa-group fa-fw" aria-hidden="true"></i> 
+                <span>New Group</span>
             </button>
 			<button id="settings">
                 <i class="fa fa-cog fa-fw" aria-hidden="true"></i> 
@@ -29,6 +39,7 @@
                 v-bind:chat="selectedChat"
                 v-bind:default_profile_img="default_profile_img"
                 v-on:sendMessage="sendMessage"
+                v-bind:inputDisable="isInputDisable"
             />
         </div>
         <div v-else>
@@ -43,6 +54,7 @@
     import Profile from './home-components/Profile.vue';
     import Search from './home-components/Search.vue';
     import ChatRoom from './home-components/ChatRoom.vue';
+    import CreateGroup from './home-components/CreateGroup.vue';
     import defaultProfileImg from '@/assets/default-user.png';
     import { ChatViewModel, ChatType } from '../model';
    
@@ -52,7 +64,8 @@
             'profile': Profile,
             'chats': Chats,
             'search': Search,
-            'chat-room': ChatRoom
+            'chat-room': ChatRoom,
+            'create-group': CreateGroup
         },
         props: ['store'],
         data : () => ({
@@ -62,7 +75,9 @@
             default_profile_img: defaultProfileImg,
             searchText: '',
             selectedChat: null,
-            filteredChatMapping: new Map()
+            filteredChatMapping: new Map(),
+            showGroup: false,
+            isInputDisable: false
         }),
         methods: {
             sendMessage: function(message) {
@@ -84,19 +99,10 @@
                     this.selectedChat = chat;
                     //this.loadChat();
                 }
+                this.isInputDisable = this.selectedChat.users.indexOf(this.user.username) == -1;
             },
             onSearch: async function() {
-                const localSearchPromise = this.store.getContacts(this.searchText);
-                let serverSearchPromise = null;
-                if(this.searchText.length > 4) {
-                    serverSearchPromise = this.store.searchUsers(this.searchText)
-                }
-                const localContacts = await localSearchPromise;
-                const serverContacts = (await serverSearchPromise)||[];
-                const localUsernames = localContacts.map(x=>x.username);
-                const uniqueServerContacts = serverContacts
-                        .filter(x=> localUsernames.indexOf(x.username) == -1);
-                let contacts = [...localContacts, ...uniqueServerContacts];
+                const contacts = await this.store.searchUsers(this.searchText)
                 const chatMapping = new Map()
                 contacts.forEach(contact => {
                     let chat = this.chatMapping.get(contact.username)
@@ -128,10 +134,22 @@
                 this.chats = Array.from(this.filteredChatMapping.values()).sort((x,y) => {
                     return -(x.messages[x.messages.length -1]?.ts - y.messages[y.messages.length -1]?.ts);
                 });
+            },
+            onGroupCreate: async function(payload) {
+                const chat = await this.store.createGroup(payload);
+                this.chatMapping = await this.store.getChats();
+                this.filteredChatMapping = this.chatMapping;
+                this.updateChatList();
+                this.selectedChat = this.filteredChatMapping.get(chat.id);
             }
         },
         created: async function() {
-            await this.store.connect();
+            try {
+                await this.store.connect();
+            } catch(err) {
+                console.error(err);
+            }
+            
             this.store.newMessageEvent.subscribe(async (msg) => {
                 let chat = this.chatMapping.get(msg.chatId)
                 if(this.chatMapping.has(msg.chatId)) {
@@ -268,4 +286,31 @@
             width: calc(100% - 340px);
         }
     }
+
+    #chatspanel {
+        height: calc(100% - 177px);
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+
+    @media screen and (max-width: 735px) {
+        #chatspanel {
+            height: calc(100% - 149px);
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+
+        #chatspanel::-webkit-scrollbar {
+            display: none;
+        }
+    }
+    #chatspanel::-webkit-scrollbar {
+        width: 8px;
+        background: #2c3e50;
+    }
+
+    #chatspanel::-webkit-scrollbar-thumb {
+        background-color: #243140;
+    }
+
 </style>

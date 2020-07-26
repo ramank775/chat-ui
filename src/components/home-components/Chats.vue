@@ -31,24 +31,7 @@
 </script>
 
 <style scoped>
-    #chats {
-        height: calc(100% - 177px);
-        overflow-y: scroll;
-        overflow-x: hidden;
-    }
-
-    @media screen and (max-width: 735px) {
-        #chats {
-            height: calc(100% - 149px);
-            overflow-y: scroll;
-            overflow-x: hidden;
-        }
-
-        #chats::-webkit-scrollbar {
-            display: none;
-        }
-    }
-
+    
     #chats.expanded {
         height: calc(100% - 334px);
     }
