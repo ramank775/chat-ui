@@ -56,6 +56,7 @@
     import CreateGroup from './home-components/CreateGroup.vue';
     import defaultProfileImg from '@/assets/default-user.png';
     import { ChatViewModel, ChatType } from '../model';
+    import notificationSound from '@/assets/inbox.mp3';
    
     export default {
         name: 'Home',
@@ -149,7 +150,7 @@
             } catch(err) {
                 console.error(err);
             }
-            
+            const sound = new Audio(notificationSound);
             this.store.newMessageEvent.subscribe(async (msg) => {
                 let chat = this.chatMapping.get(msg.chatId)
                 if(this.chatMapping.has(msg.chatId)) {
@@ -159,7 +160,7 @@
                     this.filteredChatMapping = this.chatMapping;
                 }
                 this.updateChatList();
-                
+                sound.play();
             });
             console.log('store connected')
             this.user = await this.store.getUser();
