@@ -25,21 +25,24 @@ export class Store {
             msgs.forEach(async (msg: ServerMessage) => {
                 const chatId = msg.to === currentUser.username ? msg.from : msg.to;
                 msg.chatId = chatId;
+                let message: Message | undefined;
                 switch (msg.category) {
                     case 'notification':
-                        this.handleNotification(msg);
+                        message = await this.handleNotification(msg);
                         break;
                     default:
                         {
-                            const message = new Message({
+                            message = new Message({
                                 ...msg,
                                 status: MessageStatus.UNREAD,
                                 self: false
                             });
-                            await this.addMessageToDb(message);
-                            this.newMessageEvent.emit(message);
                         }
                         break;
+                }
+                if (message) {
+                    await this.addMessageToDb(message);
+                    this.newMessageEvent.emit(message);
                 }
             });
 
@@ -50,7 +53,8 @@ export class Store {
         const db = this.chatDbConnector.db;
         if (!db) return;
         const currentUser = this.user;
-        if(!currentUser) return;
+        if (!currentUser) return;
+        msg.msgId = msg.msgId || `${msg.from}_${this.uniqueId}`;
         switch (msg.module) {
             case 'group':
                 {
@@ -60,10 +64,10 @@ export class Store {
                     if (!chat) {
                         await db.add('chat', {
                             type: ChatType.GROUP,
-                            users: group.members,
+                            users: group.members.map(x => x.username),
                             id: group.groupId,
                             name: group.name
-                        }, group.groupId);
+                        });
                     }
                     switch (msg.action) {
                         case 'add':
@@ -72,7 +76,7 @@ export class Store {
                                 const newUsers: User[] = [];
                                 // sync users
                                 for (const member of group.members) {
-                                    const user = await db.get('contacts', member);
+                                    const user = await db.get('contacts', member.username);
                                     if (!user) {
                                         const newUser = await this.getUser();
                                         if (!newUser) return;
@@ -81,7 +85,7 @@ export class Store {
                                             status: UserStatus.UNKNOWN
                                         })
                                         newUsers.push(dbUser);
-                                        await db.put('contacts', dbUser, newUser.username);
+                                        await db.put('contacts', dbUser);
                                     }
                                 }
                                 message = new Message(msg);
@@ -96,12 +100,12 @@ export class Store {
                             break;
                         case 'remove':
                             {
-                                const existingUsers = (chat?.users)||[];
-                                const newUsers = group.members;
+                                const existingUsers = (chat?.users) || [];
+                                const newUsers = group.members.map(x => x.username);
                                 const removedUsers = existingUsers.filter(x => newUsers.indexOf(x) == -1);
-                                const users:string[] = [];
+                                const users: string[] = [];
                                 for (const removedUser of removedUsers) {
-                                    if(removedUser == currentUser.username){
+                                    if (removedUser == currentUser.username) {
                                         users.push("You");
                                         continue;
                                     }
@@ -114,7 +118,7 @@ export class Store {
                             break;
                     }
                     if (message) {
-                        this.newMessageEvent.emit(message);
+                        return message;
                     }
                 }
                 break;
@@ -193,14 +197,11 @@ export class Store {
 
         await db.add('messages', msg);
 
-        const patnerUsername = msg.from == this.user.username ? msg.chatId : msg.from;
-
-        let patner = await this.getUserByUsername(patnerUsername);
-
-        patner.status = patner.status == undefined ? UserStatus.UNKNOWN : patner.status;
-
         let chat = await db.get('chat', msg.chatId)
         if (!chat) {
+            const patnerUsername = msg.from == this.user.username ? msg.to : msg.from;
+            const patner = await this.getUserByUsername(patnerUsername);
+            patner.status = patner.status == undefined ? UserStatus.UNKNOWN : patner.status;
             chat = new Chat({
                 type: ChatType.PERSONAL,
                 id: msg.chatId,
@@ -209,18 +210,26 @@ export class Store {
             });
             await db.add('chat', chat);
         }
-        const contact = await db.get('contacts', patner.username);
-        if (!contact) {
-            await this.addContact(patner);
+        for (const user of chat.users) {
+            const contact = await db.get('contacts', user);
+            if (!contact) {
+                const patner = await this.getUserByUsername(user);
+                await this.addContact(patner);
+            }
         }
-
+        return chat;
     }
 
-    private async sendMessageToRemote(msg: Message) {
+    private async sendMessageToRemote(msg: Message, type: ChatType) {
         let retry = 0;
         let result = -1;
         while (result != 0 && retry < 3) {
-            result = this._socket.send({ msgId: msg.msgId, to: msg.chatId, text: msg.text });
+            result = this._socket.send({ 
+                msgId: msg.msgId, 
+                to: msg.chatId, 
+                text: msg.text,
+                type: type == ChatType.GROUP?'group': 'single'
+            });
             if (result == -1) {
                 const status = this._socket.reconnect()
                 if (status == 0) {
@@ -267,7 +276,7 @@ export class Store {
 
     }
 
-    private async getGroupById(groupId: string): Promise<{ groupId: string, members: string[], name: string }> {
+    private async getGroupById(groupId: string): Promise<{ groupId: string, members: { username: string, role: string }[], name: string }> {
         return fetch(`/group/${groupId}`)
             .then(res => res.json());
     }
@@ -349,6 +358,15 @@ export class Store {
                 usersProfile.set(u, userProfile);
             }
 
+            if(chatDict.size < chats.length) {
+                const remaningChats = chats.filter(x=> !chatDict.has(x.id));
+                remaningChats.forEach(chat=> {
+                    const chatVM = new ChatViewModel(chat);
+                    chatDict.set(chat.id, chatVM);
+                    chatVM.users.forEach((val: string) => users.add(val));
+                })
+            }
+
             chatDict.forEach(async (value: ChatViewModel) => {
                 value.messages = value.messages.reverse();
                 value.users.forEach(x => {
@@ -377,8 +395,9 @@ export class Store {
             self: true,
             ts: Date.now()
         });
-        await this.addMessageToDb(db_msg);
-        await this.sendMessageToRemote(db_msg)
+        const chat = await this.addMessageToDb(db_msg);
+        if(chat)
+            await this.sendMessageToRemote(db_msg, chat.type)
     }
 
 
@@ -451,7 +470,8 @@ export class Store {
         }
         user = await fetch(`/profile/get?username=${username}`)
             .then(res => res.json());
-        return new User(user);
+        user = new User(user);
+        return user;
     }
     async searchUsers(searchText: string) {
         const localSearchPromise = this.getContacts(searchText);
@@ -476,6 +496,7 @@ export class Store {
     async createGroup(payload: { name: string, members: string[] }) {
         const user = this.user;
         if (!user) return;
+        const members = payload.members;
         payload.members = Array.from(new Set([user.username, ...payload.members]));
         const { groupId } = await fetch('/group/create', {
             method: 'post',
@@ -499,6 +520,23 @@ export class Store {
             return newChat;
         }
         await db.add('chat', newChat);
+
+        const users: string[] = [];
+        for (const member of members) {
+            const u = await this.getUserByUsername(member)
+            users.push(u.name);
+        }
+
+        await db.add('messages', {
+            chatId: newChat.id,
+            from: user.username,
+            msgId: `${user.username}_${this.uniqueId}`,
+            self: true,
+            status: MessageStatus.READ,
+            text: `You have added ${users.join(',')} to the group`,
+            to: newChat.id,
+            ts: Date.now()
+        });
         return newChat;
     }
 }

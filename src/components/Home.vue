@@ -18,7 +18,6 @@
             <create-group 
                 v-bind:getContact="(x) => store.searchUsers(x)" 
                 v-bind:default_profile_img="default_profile_img"
-                v-on:search="onGroupMemberSearach"
                 v-on:create="onGroupCreate"
                 v-on:cancel="showGroup=false" />
         </div>
@@ -141,6 +140,7 @@
                 this.filteredChatMapping = this.chatMapping;
                 this.updateChatList();
                 this.selectedChat = this.filteredChatMapping.get(chat.id);
+                this.showGroup = false;
             }
         },
         created: async function() {

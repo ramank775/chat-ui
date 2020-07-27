@@ -73,9 +73,9 @@
             },
             onCreateGroup: function() {
                 if(!this.selectedContacts.length) return;
-                const members = this.selectedContacts.map(x=>x.username);
+                const members = this.selectedContacts.map(x=>x.name);
                 this.$emit('create', {
-                    name: this.name || members.join(' ,'),
+                    name: this.name || members.join(', '),
                     members: this.selectedContacts.map(x=>x.username)
                 });
             },
