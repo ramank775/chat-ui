@@ -1,7 +1,7 @@
 <template>
     <div v-bind:class="[message.self?'sent': 'reply']">
         <img v-bind:src="[user.profile_img || default_profile_img]" alt="" />
-        <p><span v-if="!message.self">{{user.name}}<br/></span>{{message.text}}</p>
+        <p><span v-if="!message.self && showSenderName">{{user.name}}<br/></span>{{message.text}}</p>
     </div>
 </template>
 
@@ -9,7 +9,7 @@
 <script>
     export default {
         name: 'message',
-        props:['message', 'default_profile_img', 'user']
+        props:['message', 'default_profile_img', 'user', 'showSenderName']
     }
 </script>
 
@@ -29,6 +29,7 @@
     }
 
     .sent img {
+        display: none;
         float: right;
         margin: 6px 0 0 8px;
     }
@@ -54,7 +55,7 @@
         display: inline-block;
         padding: 10px 15px;
         border-radius: 20px;
-        min-width: 30%;
+        /* min-width: 30%; */
         max-width: 60%;
         line-height: 130%;
         font-size: 1.1em;

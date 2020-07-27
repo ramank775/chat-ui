@@ -4,7 +4,8 @@
             <li v-for="message in messages" :key="message.id">
                 <message v-bind:message="message" 
                     v-bind:user="getUser(message)"
-                    v-bind:default_profile_img="default_profile_img">
+                    v-bind:default_profile_img="default_profile_img"
+                    v-bind:showSenderName="showSenderName">
                 </message>
             </li>
         </ul>
@@ -17,6 +18,12 @@
     export default {
         name: 'messages',
         props: ['messages', 'default_profile_img', 'users'],
+        data: function() {
+            console.log("messags users length:", this.users.size);
+            return {
+                showSenderName: this.users.size > 2
+            }
+        },
         components: {
             message: Message
         },
@@ -27,11 +34,13 @@
         },
         mounted: function() {
             const messageDisplay = this.$refs.messages;
-            messageDisplay.scrollTop = messageDisplay.scrollHeight
+            messageDisplay.scrollTop = messageDisplay.scrollHeight;
+            this.showSenderName = this.users.size>2;
         },
         updated: function() {
             const messageDisplay = this.$refs.messages;
-            messageDisplay.scrollTop = messageDisplay.scrollHeight
+            messageDisplay.scrollTop = messageDisplay.scrollHeight;
+            this.showSenderName = this.users.size>2;
         }
     }
 </script>
