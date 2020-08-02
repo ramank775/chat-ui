@@ -257,7 +257,7 @@ export class Store {
     }
 
     private async syncGroupsFromRemote() {
-        const groups: { groupId: string, name: string, members: string[] }[] = await fetch('/group/get')
+        const groups: { groupId: string, name: string, members: {username: string, role: string}[] }[] = await fetch('/group/get')
             .then(res => res.json());
         const db = this.chatDbConnector.db;
         if (!db) return null;
@@ -266,10 +266,10 @@ export class Store {
             const chat = new Chat({
                 id: group.groupId,
                 name: group.name,
-                users: group.members,
+                users: group.members.map(x=>x.username),
                 type: ChatType.GROUP
             });
-            const promise = db.put('chat', chat, group.groupId);
+            const promise = db.put('chat', chat);
             promises.push(promise);
         });
         return await Promise.all(promises);
